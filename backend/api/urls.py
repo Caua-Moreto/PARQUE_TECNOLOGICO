@@ -8,7 +8,9 @@ from .views import (
     GetSecretQuestionView,
     ResetPasswordView,
     UserListView,
-    UserRoleUpdateView 
+    UserRoleUpdateView,
+    CreateUserView, 
+    CustomTokenObtainPairView
 )
 
 router = DefaultRouter()
@@ -19,7 +21,8 @@ urlpatterns = [
     path('', include(router.urls)),
     # Rota para listar e criar campos de uma categoria
     path('categories/<int:category_pk>/fields/', FieldDefinitionListCreateView.as_view(), name='field-definition-list'),
-    
+    # Rota com o token personalizado para identificarmos a role no frontend
+    path("api/token/", CustomTokenObtainPairView.as_view(), name="get_token"),
     # Rota para deletar, atualizar ou ver um campo específico
     # Ex: DELETE /api/fields/5/
     path('fields/<int:pk>/', FieldDefinitionDetailView.as_view(), name='field-definition-detail'),

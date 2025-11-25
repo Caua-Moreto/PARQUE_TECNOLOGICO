@@ -3,12 +3,14 @@ from django.contrib.auth.hashers import check_password
 from rest_framework import generics, viewsets, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework_simplejwt.views import TokenObtainPairView
 from .serializers import (
     CreateUserSerializer,
     CategorySerializer,
     AssetSerializer,
     UserProfileSerializer,
     FieldDefinitionSerializer,
+    CustomTokenObtainPairSerializer,
 )
 
 # Importa as classes de permissão do DRF.
@@ -206,3 +208,7 @@ class ResetPasswordView(APIView):
             return Response(
                 {"error": "Usuário não encontrado."}, status=status.HTTP_404_NOT_FOUND
             )
+
+# Classe para visualizarmos role no frontend
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer

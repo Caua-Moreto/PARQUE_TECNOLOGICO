@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from .models import Asset, Category, FieldDefinition, AssetFieldValue
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 # Serializer antigo, pode ser usado para listar usuários se necessário no futuro
 class UserSerializer(serializers.ModelSerializer):
@@ -28,10 +29,10 @@ class CreateUserSerializer(serializers.Serializer):
 class UserProfileSerializer(serializers.ModelSerializer):
 # Pega o papel (role) do modelo Profile relacionado
     role = serializers.CharField(source='profile.role')
-
-class Meta:
-    model = User
-    fields = ['id', 'username', 'role']
+    
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'role']
     
 # --- Serializer para o modelo FieldDefinition ---
 # Representa a definição de um campo personalizado (ex: "Cor", "Voltagem").
@@ -81,3 +82,29 @@ class AssetSerializer(serializers.ModelSerializer):
             AssetFieldValue.objects.create(asset=instance, **field_value_data)
 
         return instance
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        # Adiciona campos ao token de REFRESH
+        token['role'] = user.profile.role
+        token['username'] = user.username
+        return token
+
+    def validate(self, attrs):
+        # 1. Valida usuário e senha (padrão do JWT)
+        data = super().validate(attrs)
+
+        # 2. Gera o token de refresh com as nossas infos extras
+        refresh = self.get_token(self.user)
+
+        # 3. FORÇA a inclusão das infos no token de ACESSO (Access Token)
+        # O SimpleJWT não faz isso automaticamente, por isso precisamos fazer aqui:
+        refresh.access_token['role'] = self.user.profile.role
+        refresh.access_token['username'] = self.user.username
+
+        # 4. Atualiza a resposta para enviar esse novo token de acesso modificado
+        data['access'] = str(refresh.access_token)
+
+        return data

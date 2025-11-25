@@ -12,6 +12,7 @@ import Sidebar from "./components/Sidebar";
 import AuthLayout from "./components/AuthLayout";
 import FieldManager from "./pages/FieldManager";
 import ForgotPassword from './pages/ForgotPassword';
+import AdminUserList from "./pages/AdminUserList";
 
 const AppLayout = () => (
   <>
@@ -80,6 +81,7 @@ function App() {
           }
         >
           <Route path="/" element={<Home />} />
+          <Route path="/admin/users" element={<AdminUserList />} />
           <Route path="/category/:categoryId" element={<AssetList />} />
           <Route path="/category/:categoryId/manage" element={<FieldManager />} />
           <Route path="/category/:categoryId/new-asset" element={<AssetForm />} />

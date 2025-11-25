@@ -1,14 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import '../styles/Sidebar.css';
-// Importando os ícones
-import { LuLayoutDashboard, LuArchive, LuLogOut } from "react-icons/lu";
+import { LuLayoutDashboard, LuLogOut, LuUsers } from "react-icons/lu"; // Importe LuUsers
+import { ACCESS_TOKEN } from "../constants";
+import { jwtDecode } from "jwt-decode"; // Corrigido import (sem chaves se for default, com chaves se for named)
 
 function Sidebar() {
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem(ACCESS_TOKEN);
+    if (token) {
+      try {
+        const decoded = jwtDecode(token);
+        // Verifica se a role no token é admin
+
+        console.log("Token Decodificado:", decoded);
+
+        if (decoded.role === 'admin') {
+          setIsAdmin(true);
+        }
+      } catch (error) {
+        console.error("Erro ao decodificar token:", error);
+      }
+    }
+  }, []);
+
   return (
     <div className="sidebar">
       <div className="sidebar-header">
-        {/* pode colocar um logo aqui */}
         <span className="sidebar-logo">CA</span> 
         <span>Controle de Ativos</span>
       </div>
@@ -17,11 +37,15 @@ function Sidebar() {
           <LuLayoutDashboard size={20} /> 
           <span>Dashboard</span>
         </NavLink>
-        {/* Link para 'Novo Ativo' pode ser adicionado futuramente */}
-        {/* <NavLink to="/new-asset" className="sidebar-link">
-          <LuPlusCircle size={20} />
-          <span>Novo Ativo</span>
-        </NavLink> */}
+
+        {/* Renderiza condicionalmente o link de Admin */}
+        {isAdmin && (
+          <NavLink to="/admin/users" className="sidebar-link">
+            <LuUsers size={20} />
+            <span>Usuários</span>
+          </NavLink>
+        )}
+
         <Link to="/logout" className="sidebar-link logout-link">
           <LuLogOut size={20} />
           <span>Logout</span>
