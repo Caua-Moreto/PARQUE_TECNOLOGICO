@@ -15,8 +15,6 @@ function Sidebar() {
         const decoded = jwtDecode(token);
         // Verifica se a role no token é admin
 
-        console.log("Token Decodificado:", decoded);
-
         if (decoded.role === 'admin') {
           setIsAdmin(true);
         }

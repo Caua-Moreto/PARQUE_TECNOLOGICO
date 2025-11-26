@@ -16,10 +16,20 @@ class FieldDefinition(models.Model):
     def __str__(self): return f"{self.category.name} - {self.name}"
 
 class Asset(models.Model):
+
+    STATUS_CHOICES = [
+        ('disponivel', 'Disponível'),
+        ('em_uso', 'Em Uso'),
+        ('manutencao', 'Em Manutenção'),
+        ('inativo', 'Inativo/Descartado')
+    ]
+    
     patrimonio = models.CharField(max_length=100, unique=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='assets')
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="assets")
     created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='disponivel')
+
     def __str__(self): return self.patrimonio
 
 class AssetFieldValue(models.Model):

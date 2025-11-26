@@ -10,7 +10,8 @@ from .views import (
     UserListView,
     UserRoleUpdateView,
     CreateUserView, 
-    CustomTokenObtainPairView
+    CustomTokenObtainPairView,
+    UserDetailView,
 )
 
 router = DefaultRouter()
@@ -31,5 +32,7 @@ urlpatterns = [
     path('user/reset-password/', ResetPasswordView.as_view(), name='reset-password'),
     # Rotas para dar update na permissão de usuário
     path('users/', UserListView.as_view(), name='user-list'),
+    # Rota para ver usuários na tab admin
+    path('users/<int:pk>/', UserDetailView.as_view(), name='user-detail'),
     path('users/<int:pk>/update-role/', UserRoleUpdateView.as_view(), name='user-update-role'),
 ]

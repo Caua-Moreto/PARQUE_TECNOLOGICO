@@ -197,6 +197,11 @@
     color: #ffffff;
 }
 
+.status-in-use {
+    background-color: #3b82f6; /* Azul */
+    color: #ffffff;
+}
+
 .status-default {
     background-color: #6b7280; /* Gray */
     color: #ffffff;

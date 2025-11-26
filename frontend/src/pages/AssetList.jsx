@@ -51,19 +51,27 @@ function AssetList() {
     );
   };
 
-  const renderStatusBadge = (status) => {
-    const lowerCaseStatus = status.toLowerCase();
+const renderStatusBadge = (status) => {
+    const lowerCaseStatus = status ? status.toLowerCase() : '';
     let statusClass = "status-default";
+    let label = status;
 
-    if (lowerCaseStatus === 'active' || lowerCaseStatus === 'ativo') {
-      statusClass = "status-active";
-    } else if (lowerCaseStatus === 'inactive' || lowerCaseStatus === 'inativo') {
-      statusClass = "status-inactive";
-    } else if (lowerCaseStatus === 'maintenance' || lowerCaseStatus === 'manutenção') {
-      statusClass = "status-maintenance";
+    // Mapeamento dos códigos do backend para classes CSS e Rótulos legíveis
+    if (lowerCaseStatus === 'disponivel' || lowerCaseStatus === 'ativo') {
+      statusClass = "status-active"; // Fica VERDE
+      label = "Disponível";
+    } else if (lowerCaseStatus === 'em_uso') {
+      statusClass = "status-in-use"; // Usando azul (edit) para "Em Uso"
+      label = "Em Uso";
+    } else if (lowerCaseStatus === 'manutencao') {
+      statusClass = "status-maintenance"; // Fica AMARELO/LARANJA
+      label = "Manutenção";
+    } else if (lowerCaseStatus === 'inativo') {
+      statusClass = "status-inactive"; // Fica VERMELHO
+      label = "Inativo";
     }
 
-    return <span className={`status-badge ${statusClass}`}>{status}</span>;
+    return <span className={`status-badge ${statusClass}`}>{label}</span>;
   };
 
   if (!category) return <div>Carregando...</div>;
@@ -84,6 +92,7 @@ function AssetList() {
             <thead>
               <tr>
                 <th>Patrimônio</th>
+                <th>Status</th> {/* Nova Coluna Fixa */}
                 {category.field_definitions.map(field => <th key={field.id}>{field.name}</th>)}
                 <th>Ações</th>
               </tr>
@@ -92,14 +101,20 @@ function AssetList() {
               {assets.map(asset => (
                 <tr key={asset.id}>
                   <td>{asset.patrimonio}</td>
+                  
+                  {/* Célula do Status Fixo */}
+                  <td>
+                    {renderStatusBadge(asset.status)}
+                  </td>
+
+                  {/* Campos Dinâmicos (ex: Cor, Marca) */}
                   {category.field_definitions.map(fieldDef => {
                     const value = asset.field_values.find(fv => fv.field_definition === fieldDef.id)?.value || 'N/A';
-                    return (
-                      <td key={fieldDef.id}>
-                        {fieldDef.name.toLowerCase() === 'status' ? renderStatusBadge(value) : value}
-                      </td>
-                    );
+                    // Se você tinha um campo dinâmico chamado "Status" antes, pode removê-lo do loop ou deixá-lo.
+                    // Sugestão: Apenas exiba o valor normal aqui.
+                    return <td key={fieldDef.id}>{value}</td>;
                   })}
+                  
                   <td className="action-buttons">
                     <Link to={`/edit-asset/${asset.id}`} className="action-edit">Editar</Link>
                     <button onClick={() => handleOpenDeleteModal(asset)} className="action-delete">Deletar</button>
@@ -107,7 +122,7 @@ function AssetList() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table>        
         </div>
       </div>
       <ConfirmationModal

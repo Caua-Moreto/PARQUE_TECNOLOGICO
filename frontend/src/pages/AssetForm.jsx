@@ -8,7 +8,11 @@ import toast from 'react-hot-toast';
 function AssetForm() {
   const { categoryId, assetId } = useParams();
   const navigate = useNavigate();
+  
+  // 1. Estado para o Status (padrão 'disponivel')
   const [patrimonio, setPatrimonio] = useState("");
+  const [status, setStatus] = useState("disponivel"); 
+  
   const [fieldDefinitions, setFieldDefinitions] = useState([]);
   const [fieldValues, setFieldValues] = useState({});
   const [isLoading, setIsLoading] = useState(true);
@@ -22,6 +26,13 @@ function AssetForm() {
       api.get(`/api/assets/${assetId}/`).then(res => {
         const asset = res.data;
         setPatrimonio(asset.patrimonio);
+        
+        // 2. IMPORTANTE: Carregar o status existente ao editar
+        // Se o backend não retornar status, mantém o padrão.
+        if (asset.status) {
+            setStatus(asset.status);
+        }
+
         const initialValues = {};
         asset.field_values.forEach(fv => {
           initialValues[fv.field_definition] = fv.value;
@@ -68,6 +79,7 @@ function AssetForm() {
 
     const payload = {
       patrimonio,
+      status, // 3. IMPORTANTE: Enviar o status no payload
       category: assetCategory,
       field_values: Object.entries(fieldValues).map(([defId, val]) => ({
         field_definition: parseInt(defId),
@@ -89,6 +101,7 @@ function AssetForm() {
         }
     }).catch(err => {
         toast.dismiss(loadingToast);
+        console.error(err);
         toast.error("Ocorreu um erro ao salvar o ativo.");
         setIsLoading(false);
     });
@@ -115,6 +128,22 @@ function AssetForm() {
               pattern="[0-9]*"
               required
             />
+          </div>
+
+          {/* 4. Campo de Seleção de Status */}
+          <div className="form-group">
+            <label htmlFor="status">Situação do Ativo</label>
+            <select
+              id="status"
+              className="form-input"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+            >
+              <option value="disponivel">Disponível</option>
+              <option value="em_uso">Em Uso</option>
+              <option value="manutencao">Em Manutenção</option>
+              <option value="inativo">Inativo</option>
+            </select>
           </div>
 
           {fieldDefinitions.map((field) => (

@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from .models import Profile
 from django.contrib.auth.hashers import make_password
 from .models import Asset, Category, FieldDefinition, AssetFieldValue
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -59,27 +60,35 @@ class AssetSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Asset
-        fields = ['id', 'patrimonio', 'category', 'owner', 'created_at', 'field_values']
+        fields = ['id', 'patrimonio', 'status', 'category', 'owner', 'created_at', 'field_values']
         extra_kwargs = {
             "owner": {"read_only": True},
         }
 
     def create(self, validated_data):
-        field_values_data = validated_data.pop('field_values')
+        field_values_data = validated_data.pop('field_values', [])
         asset = Asset.objects.create(**validated_data)
         for field_value_data in field_values_data:
             AssetFieldValue.objects.create(asset=asset, **field_value_data)
         return asset
 
     def update(self, instance, validated_data):
-        field_values_data = validated_data.pop('field_values')
+        # Remove os campos dinâmicos para tratar separadamente
+        field_values_data = validated_data.pop('field_values', [])
+        
+        # 2. AQUI ESTÁ O FIX: Atualizar explicitamente o campo status
+        instance.status = validated_data.get('status', instance.status)
         instance.patrimonio = validated_data.get('patrimonio', instance.patrimonio)
         instance.category = validated_data.get('category', instance.category)
+        
+        # Salva as alterações do ativo principal
         instance.save()
 
-        instance.field_values.all().delete()
-        for field_value_data in field_values_data:
-            AssetFieldValue.objects.create(asset=instance, **field_value_data)
+        # Atualiza os campos dinâmicos
+        if field_values_data:
+            instance.field_values.all().delete()
+            for field_value_data in field_values_data:
+                AssetFieldValue.objects.create(asset=instance, **field_value_data)
 
         return instance
 
@@ -108,3 +117,27 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['access'] = str(refresh.access_token)
 
         return data
+    
+class AdminUserSerializer(serializers.ModelSerializer):
+    role = serializers.CharField(source='profile.role', read_only=True) # Role é tratada separadamente ou bloqueada aqui
+    secret_question = serializers.CharField(source='profile.secret_question')
+    # Opicional: permitir alterar a resposta secreta também, se desejar
+    
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'role', 'secret_question']
+
+    def update(self, instance, validated_data):
+        profile_data = validated_data.pop('profile', {})
+        secret_question = profile_data.get('secret_question')
+
+        # Atualiza dados do User
+        instance.username = validated_data.get('username', instance.username)
+        instance.save()
+
+        # Atualiza dados do Profile
+        if secret_question:
+            instance.profile.secret_question = secret_question
+            instance.profile.save()
+        
+        return instance

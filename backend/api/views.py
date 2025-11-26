@@ -8,6 +8,7 @@ from .serializers import (
     CreateUserSerializer,
     CategorySerializer,
     AssetSerializer,
+    AdminUserSerializer,
     UserProfileSerializer,
     FieldDefinitionSerializer,
     CustomTokenObtainPairSerializer,
@@ -137,6 +138,19 @@ class UserListView(generics.ListAPIView):
     serializer_class = UserProfileSerializer
     permission_classes = [IsAdminUser]
 
+class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = User.objects.all()
+    serializer_class = AdminUserSerializer
+    permission_classes = [IsAdminUser]
+
+    def perform_destroy(self, instance):
+        # Impede que o usuário delete a si mesmo
+        if instance == self.request.user:
+             # Levanta um erro de validação ou permissão
+             from rest_framework.exceptions import PermissionDenied
+             raise PermissionDenied("Você não pode excluir sua própria conta.")
+        instance.delete()
+
 class UserRoleUpdateView(APIView):
     permission_classes = [IsAdminUser]
 
@@ -145,6 +159,9 @@ class UserRoleUpdateView(APIView):
             user = User.objects.get(pk=pk)
         except User.DoesNotExist:
             return Response({'error': 'Usuário não encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if user.id == request.user.id:
+            return Response({'error': 'Você não pode alterar seu próprio cargo.'}, status=status.HTTP_403_FORBIDDEN)
 
         new_role = request.data.get('role')
         if new_role not in ['viewer', 'editor', 'admin']:
